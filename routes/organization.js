@@ -1,9 +1,7 @@
 const express = require("express");
-const connection = require("../config/db")
+const connection = require("../config/db");
 
 const router = express.Router();
-
-
 
 // const organizations = [
 //   {
@@ -17,20 +15,36 @@ const router = express.Router();
 // ];
 
 router.get("/", (req, res) => {
-  connection.query(
-    "SELECT * FROM organizations",
-    (err, results)=>{
-      if (err){
-        return res.status(400).json({
-          message:"database error"
-        })
-      }
-      res.json(results)
+  connection.query("SELECT * FROM organizations", (err, results) => {
+    if (err) {
+      return res.status(400).json({
+        message: "database error",
+      });
     }
-  )
+    res.json(results);
+  });
 });
 
 router.get("/:id", (req, res) => {
+  const id = req.params.id;
+  connection.query(
+    "SELECT * FROM organizations WHERE id =?",
+    [id],
+    (err, results) => {
+      if (err) {
+        res.status(400).json({
+          message: "database not found",
+        });
+      }
+      if (results.length === 0) {
+        return res.status(404).json({
+          message: "not found",
+        });
+      }
+      res.json(results[0]);
+    },
+  );
+
   // const id = parseInt(req.params.id);
   // const organization = organizations.find((org) => org.id === id);
 
@@ -40,11 +54,7 @@ router.get("/:id", (req, res) => {
   //   });
   // }
   // res.json(organization);
-  
-
-}
-
-);
+});
 
 router.post("/", (req, res) => {
   // const organization = {
@@ -59,52 +69,91 @@ router.post("/", (req, res) => {
   //   data: organization,
   // });
 
-  const {name} = req.body;
+  const { name } = req.body;
 
-  connection.query("INSERT INTO organizations (name) VALUES (?)",
+  connection.query(
+    "INSERT INTO organizations (name) VALUES (?)",
     [name],
-    (err, result)=>{
-      if (err){
+    (err, result) => {
+      if (err) {
         return res.status(400).json({
-          message:"database error"
-        })
+          message: "database error",
+        });
       }
       res.json({
-        message:"created successfully"
-      })
-    }
-  )
+        message: "created successfully",
+      });
+    },
+  );
 });
 
 router.put("/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const organization = organizations.find((org) => org.id === id);
+  // const id = parseInt(req.params.id);
+  // const organization = organizations.find((org) => org.id === id);
 
-  if (!organization) {
-    return res.status(404).json({
-      message: "Organization not found",
-    });
-  }
-  organization.name = req.body.name;
-  res.json({
-    message: "name was updated",
-    data: organization,
-  });
+  // if (!organization) {
+  //   return res.status(404).json({
+  //     message: "Organization not found",
+  //   });
+  // }
+  // organization.name = req.body.name;
+  // res.json({
+  //   message: "name was updated",
+  //   data: organization,
+  // });
+
+  const id = req.params.id;
+  const { name } = req.body;
+
+  connection.query(
+    "UPDATE organizations SET name = ? where id =?",
+    [name, id],
+    (err, results) => {
+      if (err) {
+        res.status(400).json({
+          message: "database erro",
+        });
+      }
+      if (results.affectedRows === 0) {
+        res.status(404).json({
+          message: "organizations not found",
+        });
+      }
+      res.json({ message: "Organization updated" });
+    },
+  );
 });
 
 router.delete("/:id", (req, res) => {
   const id = req.params.id;
-  const index = organizations.findIndex((org) => org.id === id);
+  connection.query(
+    "DELETE FROM organizations WHERE id = ?",
+    [id],
+    (err, results) => {
+      if (err) {
+        res.status(400).json({
+          message: "database error",
+        });
+      }
+      if (results.affectedRows === 0) {
+        res.status(404).json({
+          message: "organizations not found",
+        });
+      }
+      res.json({ message: "Organization deleted" });
+    },
+  );
+  // const index = organizations.findIndex((org) => org.id === id);
 
-  if (index === -1) {
-    return res.status(400).json({
-      message: "organization not found",
-    });
-  }
-  organizations.splice(index, 1);
-  res.json({
-    message: "organization was deleted",
-  });
+  // if (index === -1) {
+  //   return res.status(400).json({
+  //     message: "organization not found",
+  //   });
+  // }
+  // organizations.splice(index, 1);
+  // res.json({
+  //   message: "organization was deleted",
+  // });
 });
 
 module.exports = router;
