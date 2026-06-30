@@ -1,7 +1,7 @@
 const express = require("express");
 
 const router = express.Router();
-const hash = require("bcrypt");
+const bcrypt = require("bcrypt");
 const connection = require("../config/db");
 
 router.get("/", (req, res) => {
@@ -15,7 +15,7 @@ router.get("/", (req, res) => {
   });
 });
 
-router.post("/", (req, res) => {
+router.post("/", async(req, res) => {
   const { name, email, password, role, organization_id } = req.body;
   if (!name || !email || !password || !role) {
     return res.status(400).json({
@@ -38,10 +38,10 @@ router.post("/", (req, res) => {
       message: "Invalid role.",
     });
   }
-
+  const hashpassword = await bcrypt.hash(password, 20)
   connection.query(
     "INSERT INTO users (name, email, password, role, organization_id)VALUES(?,?,?,?,?)",
-    [name, email, password, role, organization_id],
+    [name, email, hashpassword, role, organization_id],
     (err, results) => {
       if (err) {
         return res.status(400).json({
